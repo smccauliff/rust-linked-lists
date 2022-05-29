@@ -1,5 +1,3 @@
-mod lib;
-
 use std::mem::replace;
 
 // This enum requires space for a discriminator integer since Cons binary representation can't
@@ -91,7 +89,7 @@ struct SListV3Node<T : Copy> {
 
 #[cfg(test)]
 mod test {
-    use crate::SListV3;
+    use crate::firstlist::SListV3;
 
     #[test]
     fn basics() {
