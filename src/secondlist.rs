@@ -4,11 +4,42 @@ pub struct SListV4<T> {
     head : Option<Box<SListV4Node<T>>>,
 }
 
-// Generic type parameter must be specified after the "impl" and then SListV4<T> propagates the unknown type
+// This is a tuple struct which is being used as a wrapper around SListV4.
+// IMO: I don't like tuples.  Code is more readable without them.
+//  IntoIter appears to be like a C++ concept.  A type which should exist, but we have no way of
+// actually enforcing its existance (before C++-20 anyways).
+// IntoIter takes a value and not a reference to a value.  When this is returned from a method
+// ownership will be moved to iterator.  It is an *into* iterator which is destructive so I guess
+// that makes sense
+pub struct IntoIter<T>(SListV4<T>);
+
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        // access fields of a tuple struct numerically
+        self.0.pop()
+    }
+}
+
+// Iter is valid over some lifetime
+pub struct Iter<'a, T> {
+    next : Option<&'a SListV4Node<T>>,
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.map(|node| {
+            // Option.as_deref is subtle complicated.  It
+            self.next = node.next.as_deref();
+            &node.elem
+        })
+    }
+}
+
 impl<T> SListV4<T> {
     // This is a static member function because it does not have a self parameter
     pub fn new() -> Self {
-        //TODO:  why do I not need to mention the type parameters here
         SListV4 { head : None,}
     }
 
@@ -40,6 +71,18 @@ impl<T> SListV4<T> {
             self.head = node.next;
             node.elem
         })
+    }
+
+    // Since this takes self (a value).   This converts self into an iterator.  The previous variable
+    // owning self will no longer be valid.
+    pub fn into_iter(self) -> IntoIter<T> {
+        IntoIter(self)
+    }
+
+    // Iter requires a lifetime, but it appears this can be elided since the default rule,
+    // returned object has a lifetime of self, would appear to be good enough here.
+    pub fn iter(&self) -> Iter<T> {
+        Iter{ next : self.head.as_deref() }
     }
 }
 
@@ -98,4 +141,30 @@ mod test {
 
         assert_eq!(list_v4.peek(), Some(&7));
     }
+
+    #[test]
+    fn into_iter() {
+        let mut list_v4 = SListV4::new();
+        list_v4.push(1); list_v4.push(2); list_v4.push(3);
+
+        let mut iter = list_v4.into_iter();
+        assert_eq!(iter.next(), Some(3));
+        assert_eq!(iter.next(), Some(2));
+        assert_eq!(iter.next(), Some(1));
+        assert_eq!(iter.next(), None);
+
+        // Uncomment this to validate this won't compile because list_v4 is now invalid.
+       // assert_eq!(list_v4.peek(), None);
+    }
+
+    #[test]
+    fn iter() {
+        let mut list_v4 = SListV4::new();
+        list_v4.push(1);
+
+        for x in list_v4.iter() {
+            println!("{}", x);
+        };
+    }
 }
+
