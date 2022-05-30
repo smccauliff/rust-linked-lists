@@ -30,9 +30,24 @@ impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         self.next.map(|node| {
-            // Option.as_deref is subtle complicated.  It
             self.next = node.next.as_deref();
             &node.elem
+        })
+    }
+}
+
+pub struct IterMut<'a, T> {
+    next : Option<&'a mut SListV4Node<T>>,
+}
+
+impl<'a, T> Iterator for IterMut<'a, T> {
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // This needs to "take", which will swap the mutable reference next with Option::None
+        self.next.take().map(|node| {
+            self.next = node.next.as_deref_mut();
+            &mut node.elem
         })
     }
 }
@@ -84,6 +99,10 @@ impl<T> SListV4<T> {
     pub fn iter(&self) -> Iter<T> {
         Iter{ next : self.head.as_deref() }
     }
+
+    pub fn iter_mut(&mut self) -> IterMut<T> {
+        IterMut{ next : self.head.as_deref_mut() }
+    }
 }
 
 // Prevent automatic destructor from running into a stack overflow
@@ -95,6 +114,7 @@ impl<T> Drop for SListV4<T> {
         }
     }
 }
+
 
 
 #[derive(Debug)]
@@ -161,10 +181,30 @@ mod test {
     fn iter() {
         let mut list_v4 = SListV4::new();
         list_v4.push(1);
+        list_v4.push(2);
 
         for x in list_v4.iter() {
             println!("{}", x);
-        };
+        }
+
+        let mut iter = list_v4.iter();
+        assert_eq!(iter.next(), Some(&2));
+        assert_eq!(iter.next(), Some(&1));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn iter_mut() {
+        let mut list_v4 = SListV4::new();
+        let mut iter_mut = list_v4.iter_mut();
+        assert_eq!(iter_mut.next(), None);
+        list_v4.push(1);
+        list_v4.push(2);
+
+        let mut iter_mut2 = list_v4.iter_mut();
+        assert_eq!(iter_mut2.next(), Some(&mut 2));
+        assert_eq!(iter_mut2.next(), Some(&mut 1));
+        assert_eq!(iter_mut2.next(), None);
     }
 }
 
