@@ -1,4 +1,4 @@
-use firstlist::{SListV1, SListV3};
+use linked_lists::firstlist::{SListV1, SListV3};
 
 pub fn main() {
     let list : SListV1<i32> = SListV1::Cons(1, Box::new(SListV1::Cons(2, Box::new(SListV1::Nil))));

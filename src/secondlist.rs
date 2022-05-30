@@ -12,6 +12,18 @@ impl<T> SListV4<T> {
         SListV4 { head : None,}
     }
 
+    pub fn peek(&self) -> Option<&T> {
+        self.head.as_ref().map(|node| {
+            &node.elem
+        })
+    }
+
+    pub fn peak_mut(&mut self) -> Option<&mut T> {
+        self.head.as_mut().map(|node| {
+            &mut node.elem
+        })
+    }
+
     pub fn push(&mut self, elem : T) {
         let new_node_box = Box::new(SListV4Node {
             elem : elem,
@@ -72,5 +84,18 @@ mod test {
         assert_eq!(list_v4.pop(), Some(3));
         assert_eq!(list_v4.pop(), Some(0));
         assert_eq!(list_v4.pop(), None);
+    }
+
+    #[test]
+    pub fn peek_test() {
+        let mut list_v4 = SListV4::new();
+        list_v4.push(0);
+
+        // | pattern match|
+        list_v4.peak_mut().map(| value| {
+            *value = 7;
+        });
+
+        assert_eq!(list_v4.peek(), Some(&7));
     }
 }
