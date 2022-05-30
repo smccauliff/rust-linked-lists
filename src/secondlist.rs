@@ -1,11 +1,11 @@
 // This cleans up the V4 implementation by just using Option instead of having a separate Link enum
 #[derive(Debug)]
-pub struct SListV4<T : Copy> {
+pub struct SListV4<T> {
     head : Option<Box<SListV4Node<T>>>,
 }
 
 // Generic type parameter must be specified after the "impl" and then SListV4<T> propagates the unknown type
-impl<T : Copy> SListV4<T> {
+impl<T> SListV4<T> {
     // This is a static member function because it does not have a self parameter
     pub fn new() -> Self {
         //TODO:  why do I not need to mention the type parameters here
@@ -32,7 +32,7 @@ impl<T : Copy> SListV4<T> {
 }
 
 // Prevent automatic destructor from running into a stack overflow
-impl<T : Copy> Drop for SListV4<T> {
+impl<T> Drop for SListV4<T> {
     fn drop(&mut self) {
         let mut cur_link = self.head.take();
         while let Some(mut boxed_node) = cur_link {
@@ -43,7 +43,7 @@ impl<T : Copy> Drop for SListV4<T> {
 
 
 #[derive(Debug)]
-struct SListV4Node<T : Copy> {
+struct SListV4Node<T> {
     elem : T,
     next : Option<Box<SListV4Node<T>>>,
 }
